@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>PenaFlex AI — Banner &amp; Signboard Maker</title>
+<meta name="description" content="Auto-generate panaflex banners, signboards and posters from a simple command. Remove and replace photo backgrounds. By M Ijaz." />
+<meta name="theme-color" content="#7A1F2B" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">P</span>
+    <span class="brand-text">PenaFlex <b>AI</b></span>
+  </div>
+  <div class="topbar-actions">
+    <button id="galleryBtn" class="icon-btn" title="My Designs" aria-label="My Designs">🗂️</button>
+    <button id="installBtn" class="icon-btn install-btn hidden" title="Install App" aria-label="Install App">⬇️</button>
+  </div>
+</header>
+
+<main class="app">
+
+  <!-- ===== COMMAND BAR ===== -->
+  <section class="command-panel" aria-label="Design command">
+    <label for="commandInput" class="command-label">Apna banner command likhein / Type your banner command</label>
+    <div class="command-row">
+      <textarea id="commandInput" rows="2" placeholder='e.g. "New Shop Opening Sale 50% Off, red theme" or "Eid Mubarak greeting card, green gold"'></textarea>
+      <button id="generateBtn" class="btn-primary">
+        <span class="btn-icon">✨</span><span>Generate</span>
+      </button>
+    </div>
+    <div class="quick-chips" id="quickChips">
+      <button class="chip" data-cmd="Grand Shop Opening, 50% Off, red theme">Shop Opening</button>
+      <button class="chip" data-cmd="Eid Mubarak greeting, green and gold theme">Eid Mubarak</button>
+      <button class="chip" data-cmd="School Admissions Open 2026, blue theme">School Admission</button>
+      <button class="chip" data-cmd="Wedding Ceremony Invitation, pink and gold theme">Wedding</button>
+      <button class="chip" data-cmd="Sale Sale Sale Flat 70% Off, red yellow theme">Big Sale</button>
+      <button class="chip" data-cmd="Restaurant Grand Opening, orange theme">Restaurant</button>
+      <button class="chip" data-cmd="Happy Birthday celebration, purple theme">Birthday</button>
+      <button class="chip" data-cmd="Welcome Back to School 2026, teal theme">Welcome Back</button>
+    </div>
+  </section>
+
+  <!-- ===== SIZE + CANVAS ===== -->
+  <section class="stage-panel">
+    <div class="stage-toolbar">
+      <select id="sizeSelect" class="select-input" title="Board Size">
+        <option value="1200x600">3ft x 6ft (Landscape)</option>
+        <option value="1000x800">4ft x 4ft (Square-ish)</option>
+        <option value="800x1200">4ft x 8ft (Portrait)</option>
+        <option value="1200x400">2ft x 6ft (Slim Banner)</option>
+        <option value="1080x1080">Social Post (1:1)</option>
+        <option value="1080x1350">Social Post (4:5)</option>
+      </select>
+      <button id="undoBtn" class="icon-btn" title="Undo">↩️</button>
+      <button id="redoBtn" class="icon-btn" title="Redo">↪️</button>
+      <button id="clearBtn" class="icon-btn" title="Clear board">🧹</button>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="board"></canvas>
+      <div id="overlayLayer" class="overlay-layer"></div>
+    </div>
+
+    <div class="stage-status" id="stageStatus">Type a command above and tap Generate to create your first panaflex.</div>
+  </section>
+
+  <!-- ===== EDIT TOOLS (contextual, shown when an element is selected) ===== -->
+  <section class="edit-tools hidden" id="editTools" aria-label="Edit selected element">
+    <div class="edit-row" id="textEditRow">
+      <input type="text" id="editTextValue" placeholder="Text" />
+      <input type="color" id="editTextColor" title="Text color" />
+      <input type="range" id="editTextSize" min="14" max="220" value="48" title="Font size" />
+      <button id="editFontBtn" class="pill-btn">Font</button>
+      <button id="deleteElBtn" class="pill-btn danger">Delete</button>
+    </div>
+  </section>
+
+  <!-- ===== BOTTOM TOOL DOCK ===== -->
+  <nav class="tool-dock" aria-label="Tools">
+    <button class="dock-btn" id="addTextTool"><span>🔤</span>Text</button>
+    <button class="dock-btn" id="addImageTool"><span>🖼️</span>Image</button>
+    <button class="dock-btn" id="bgTool"><span>🎨</span>Background</button>
+    <button class="dock-btn" id="removeBgTool"><span>✂️</span>Remove BG</button>
+    <button class="dock-btn" id="shapeTool"><span>◆</span>Shape</button>
+  </nav>
+
+  <!-- ===== ACTION BAR ===== -->
+  <section class="action-bar">
+    <button id="saveBtn" class="action-btn"><span>💾</span>Save</button>
+    <button id="downloadBtn" class="action-btn"><span>⬇️</span>Download</button>
+    <button id="shareBtn" class="action-btn"><span>📤</span>Share</button>
+    <button id="editModeBtn" class="action-btn"><span>✏️</span>Edit Mode</button>
+  </section>
+
+</main>
+
+<!-- ===== HIDDEN FILE INPUTS ===== -->
+<input type="file" id="imageFileInput" accept="image/*" class="hidden-input" />
+<input type="file" id="bgFileInput" accept="image/*" class="hidden-input" />
+<input type="file" id="removeBgFileInput" accept="image/*" class="hidden-input" />
+
+<!-- ===== BACKGROUND PICKER SHEET ===== -->
+<div class="sheet-backdrop hidden" id="bgSheetBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Background</h3>
+    <div class="swatch-grid" id="swatchGrid"></div>
+    <div class="sheet-actions">
+      <button id="bgGradientBtn" class="pill-btn">Gradient</button>
+      <button id="bgPhotoBtn" class="pill-btn">Choose Photo</button>
+      <button id="bgCloseBtn" class="pill-btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REMOVE BG SHEET ===== -->
+<div class="sheet-backdrop hidden" id="removeBgSheetBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Background Remove &amp; Replace</h3>
+    <p class="sheet-hint">Select a photo. AI will remove its background, then choose what to put behind it.</p>
+    <div class="rbg-preview-wrap">
+      <canvas id="rbgPreview"></canvas>
+      <div id="rbgLoading" class="rbg-loading hidden"><div class="spinner"></div><span>Removing background…</span></div>
+    </div>
+    <div class="rbg-controls">
+      <button id="rbgChooseBtn" class="pill-btn">Choose Photo</button>
+      <div class="swatch-grid" id="rbgSwatchGrid"></div>
+      <button id="rbgPhotoAsBgBtn" class="pill-btn">Use Photo as BG</button>
+    </div>
+    <div class="sheet-actions">
+      <button id="rbgInsertBtn" class="pill-btn primary">Insert into Board</button>
+      <button id="rbgCloseBtn" class="pill-btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FONT PICKER SHEET ===== -->
+<div class="sheet-backdrop hidden" id="fontSheetBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Choose Font</h3>
+    <div class="font-list" id="fontList"></div>
+    <div class="sheet-actions">
+      <button id="fontCloseBtn" class="pill-btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GALLERY DRAWER ===== -->
+<div class="sheet-backdrop hidden" id="galleryBackdrop">
+  <div class="sheet sheet-tall">
+    <div class="sheet-handle"></div>
+    <h3>My Designs</h3>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div class="sheet-actions">
+      <button id="galleryCloseBtn" class="pill-btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- MediaPipe Selfie Segmentation for background removal -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
